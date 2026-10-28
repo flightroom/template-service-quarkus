@@ -11,7 +11,7 @@ variables:
 
 test:
   stage: test
-  image: eclipse-temurin:25-jdk
+  image: eclipse-temurin:25-jdk-alpine  # busybox wget lets mvnw download Maven (the Ubuntu image has neither curl nor wget)
   cache:
     key:
       files:
