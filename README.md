@@ -39,6 +39,12 @@ Environment variables only:
 
 Any Quarkus property can also be set from the environment (e.g. `QUARKUS_LOG_LEVEL=DEBUG`). Keep `SHUTDOWN_DELAY` + `SHUTDOWN_TIMEOUT` below the Kubernetes `terminationGracePeriodSeconds` (30s by default); on Kubernetes you can raise `SHUTDOWN_DELAY` (e.g. `5s`) so the pod leaves the Service endpoints before connections are closed.
 
+## Application Insights
+
+In Flightroom, attach an "Application Insights" resource to the backend. The platform then passes the container `APPLICATIONINSIGHTS_CONNECTION_STRING`, along with `OTEL_SERVICE_NAME` (the backend slug) and `OTEL_RESOURCE_ATTRIBUTES` (e.g. `deployment.environment=prod,service.version=1.4.2`).
+
+The image ships the [Application Insights Java agent](https://learn.microsoft.com/azure/azure-monitor/app/java-standalone-config) 3.7.10. `docker-entrypoint.sh` adds it to `JAVA_TOOL_OPTIONS` only when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set: without it the JVM starts as before and nothing is sent. With it, requests, outgoing calls, logs and JVM metrics are collected with no code change; the cloud role name is `OTEL_SERVICE_NAME` (copied into `APPLICATIONINSIGHTS_ROLE_NAME` unless that is set) and the application version is `service.version` from `OTEL_RESOURCE_ATTRIBUTES`. The agent logs its own diagnostics to stdout (level: `APPLICATIONINSIGHTS_SELF_DIAGNOSTICS_LEVEL`); `APPLICATIONINSIGHTS_CONFIGURATION_CONTENT` replaces its JSON configuration. Outside the image (`./mvnw quarkus:dev`, `java -jar`) the agent is not attached. A native image cannot load a Java agent: if you build one, use the `quarkus-opentelemetry-exporter-azure` extension instead.
+
 ## Test and build
 
 ```bash

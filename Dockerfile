@@ -10,6 +10,11 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw -B -q package -DskipTests
 FROM eclipse-temurin:25-jre-alpine
 LABEL org.opencontainers.image.title="%serviceSlug%"
 RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
+# Application Insights Java agent, pinned; docker-entrypoint.sh attaches it only when APPLICATIONINSIGHTS_CONNECTION_STRING is set
+ADD --checksum=sha256:93a70c8f5d364c7e777f6c4d1b235dba91aef8448bd3fa94359f1d7f3e2eb0ec --chmod=0755 \
+  https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.7.10/applicationinsights-agent-3.7.10.jar \
+  /opt/applicationinsights/applicationinsights-agent.jar
+COPY --chmod=0755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENV PORT=8080 JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 WORKDIR /app
 # fast-jar layout, dependencies first so code changes only rebuild the last layers
@@ -22,4 +27,4 @@ EXPOSE 8080
 # busybox wget ships with the alpine base, no curl needed
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
   CMD wget -q -O /dev/null "http://127.0.0.1:${PORT}/q/health/live" || exit 1
-ENTRYPOINT ["java", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-jar", "quarkus-run.jar"]
+ENTRYPOINT ["docker-entrypoint.sh", "java", "-Djava.util.logging.manager=org.jboss.logmanager.LogManager", "-jar", "quarkus-run.jar"]

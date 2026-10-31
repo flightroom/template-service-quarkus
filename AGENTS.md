@@ -10,6 +10,7 @@ Java 25 LTS + Quarkus 3.40 (Quarkus REST + Jackson) backend service, built with 
 - `src/main/resources/application.properties`: port, graceful shutdown, OpenAPI info, Swagger UI in prod.
 - `src/test/java/...`: `@QuarkusTest` + RestAssured tests.
 - `Dockerfile`: multi-stage, non-root user `10001`, healthcheck on `/q/health/live`.
+- `docker-entrypoint.sh`: attaches the Application Insights Java agent (`-javaagent` in `JAVA_TOOL_OPTIONS`) only when `APPLICATIONINSIGHTS_CONNECTION_STRING` is set, then runs the JVM.
 - `mvnw`, `.mvn/wrapper/`: Maven Wrapper. Always use `./mvnw`, never a system `mvn`.
 
 ## Endpoints the platform relies on
